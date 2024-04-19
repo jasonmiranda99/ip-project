@@ -17,16 +17,22 @@ class HandDetectorMP:
         self.mp_draw = mp.solutions.drawing_utils
 
     def find_hands(self, img, draw=True):
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            self.results = self.hands.process(img_rgb)
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        self.results = self.hands.process(img_rgb)
 
-            if self.results.multi_hand_landmarks:
-                for hand_lms in self.results.multi_hand_landmarks:
-                    if draw:
-                        self.mp_draw.draw_landmarks(img, hand_lms, self.mp_hands.HAND_CONNECTIONS)
+        if self.results.multi_hand_landmarks:
+            for hand_landmarks in self.results.multi_hand_landmarks:
+                if draw:
+                    # Draw hand landmarks
+                    self.mp_draw.draw_landmarks(img, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
 
-            return img
-    
+                    # Draw circles on landmarks
+                    for landmark in hand_landmarks.landmark:
+                        x, y = int(landmark.x * img.shape[1]), int(landmark.y * img.shape[0])
+                        cv2.circle(img, (x, y), 5, (255, 0, 0), cv2.FILLED)
+
+        return img
+
     def find_position(self, img, hand_no=0, draw=True):
         self.lm_list = []
 
@@ -41,11 +47,11 @@ class HandDetectorMP:
                     cv2.circle(img, (cx, cy), 10, (200, 100, 200), cv2.FILLED)
 
         return self.lm_list
-    
+
     def fingers_up(self):
         fingers = []
 
-       
+        
    # Thumb 
         if self.lm_list[self.tip_ids[0]][1] > self.lm_list[self.tip_ids[1]][1]: # right hand
             if self.lm_list[self.tip_ids[0]][1] > self.lm_list[self.tip_ids[0] - 1][1]:
@@ -75,8 +81,8 @@ def main():
 
     while True:
         success, img = cap.read()
-        img = detector.find_hands(img, draw=False)
-        lm_list = detector.find_position(img, draw=False)
+        img = detector.find_hands(img, draw=True)
+        lm_list = detector.find_position(img, draw=True)
 
         if len(lm_list) != 0:
             print(lm_list[4])
@@ -92,5 +98,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
