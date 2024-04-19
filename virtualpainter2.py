@@ -114,10 +114,6 @@ while True:
 
 
 
-
-
-
-
     #overlaying the header
     resizedHeader = cv2.resize(header, (1280, 125))
 
