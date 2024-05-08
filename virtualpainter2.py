@@ -7,14 +7,18 @@ import handtrackingmodule2 as htm
 brushThickness = 20
 eraserThickness = 100
 
-folderPath = "C:\\Users\\jason\\Documents\\VS Code Programs\\ip-project\\header"
+# Get the directory of the current script
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Directory for header images
+folderPath = os.path.join(script_dir, "header")
 
 myList = os.listdir(folderPath)
 print(myList)
 overlayList = []
 
 for imPath in myList:
-    image = cv2.imread(f'{folderPath}/{imPath}')
+    image = cv2.imread(os.path.join(folderPath, imPath))
     overlayList.append(image)
 
 print(len(overlayList))
@@ -29,7 +33,7 @@ cap.set(4, 720)
 
 detector = htm.HandDetectorMP(detection_con=0.85)
 
-# initial points
+# Initial points
 xp, yp = 0, 0
 
 imgCanvas = np.zeros((720, 1280, 3), np.uint8)
@@ -86,7 +90,10 @@ while True:
                     elif 1250 < x1 < 1450:
                         header = overlayList[4]
                         if save_canvas:
-                            cv2.imwrite("C:\\Users\\jason\\Documents\\VS Code Programs\\ip-project\\canvas\\canvas.png", imgCanvas)
+                            canvas_folder = os.path.join(script_dir, "canvas")
+                            if not os.path.exists(canvas_folder):
+                                os.makedirs(canvas_folder)
+                            cv2.imwrite(os.path.join(canvas_folder, "canvas.png"), imgCanvas)
                             save_canvas = False
                             print("Canvas saved!")
                             # Prompt box
