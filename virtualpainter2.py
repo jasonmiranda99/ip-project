@@ -3,8 +3,10 @@ import numpy as np
 import time
 import os
 import handtrackingmodule2 as htm
+import easyocr
 
-brushThickness = 20
+
+brushThickness = 10
 eraserThickness = 100
 
 # Get the directory of the current script
@@ -31,7 +33,7 @@ cap = cv2.VideoCapture(0)
 cap.set(3, 1280)
 cap.set(4, 720)
 
-detector = htm.HandDetectorMP(detection_con=0.85)
+detector = htm.HandDetectorMP(detection_con=0.85,max_hands=1)
 
 # Initial points
 xp, yp = 0, 0
@@ -39,6 +41,9 @@ xp, yp = 0, 0
 imgCanvas = np.zeros((720, 1280, 3), np.uint8)
 
 save_canvas = False  # Flag to determine whether to save the canvas
+reader = easyocr.Reader(['en'])
+
+
 
 while True:
     # Import image
@@ -48,6 +53,10 @@ while True:
     # Find hand landmarks
     img = detector.find_hands(img)
     lm_list = detector.find_position(img, draw=True)
+
+
+ 
+             
 
     if len(lm_list) != 0:
         # Tip of index and middle finger
@@ -75,33 +84,58 @@ while True:
 
                 # Clicking the header
                 if y1 < 125:
-                    if 200 < x1 < 400:
+
+                    if 0<x1<100:
+                        header=overlayList[5]
+                        cv2.putText(img, "Reset",(420,340),cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
+                        # Clear canvas
+                        imgCanvas = np.zeros((720, 1280, 3), np.uint8)
+                        
+                    elif 150 < x1 < 350:
                         header = overlayList[0]
-                        drawColor = (255, 0, 0)
-                    elif 500 < x1 < 700:
-                        header = overlayList[1]
                         drawColor = (0, 0, 255)
-                    elif 750 < x1 < 900:
+                    elif 450 < x1 < 650:
+                        header = overlayList[1]
+                        drawColor = (255, 0, 0)
+                    elif 700 < x1 < 850:
                         header = overlayList[2]
                         drawColor = (0, 255, 0)
-                    elif 1000 < x1 < 1150:
+                    elif 950 < x1 < 1100:
                         header = overlayList[3]
                         drawColor = (0, 0, 0)
-                    elif 1250 < x1 < 1450:
+                    elif 1150 < x1 < 1400:
                         header = overlayList[4]
                         if save_canvas:
                             canvas_folder = os.path.join(script_dir, "canvas")
                             if not os.path.exists(canvas_folder):
                                 os.makedirs(canvas_folder)
-                            cv2.imwrite(os.path.join(canvas_folder, "canvas.png"), imgCanvas)
+
+                            cropped_canvas = imgCanvas[125:, :]
+
+                            cv2.imwrite(os.path.join(canvas_folder, "canvas.png"), cropped_canvas)
                             save_canvas = False
                             print("Canvas saved!")
                             # Prompt box
+                            result = reader.readtext(os.path.join(canvas_folder, "canvas.png"))
+                            # Write the detected text to a text file
+
+                            with open(os.path.join(script_dir, "output", "detected_text.txt"), 'w') as file:
+                                for (bbox, text, prob) in result:
+                                    file.write(f'Text: {text}, Probability: {prob}\n')
+
+                            print("Text detected and saved to 'detected_text.txt'!")
+                            save_canvas = False
+
+
+            
                             cv2.rectangle(img, (400, 200), (880, 400), (0, 255, 0), cv2.FILLED)
-                            cv2.putText(img, "Canvas Saved!", (420, 340), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 255, 255), 5, cv2.LINE_AA)
+                            cv2.putText(img, "Canvas Saved!", (420, 340), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
+
+
 
                 cv2.rectangle(img, (x1, y1 - 25), (x2, y2 + 25), drawColor, cv2.FILLED)
 
+                
         # Only index finger is up aka (drawing mode)
         if len(fingers) >= 3:  # Ensure fingers list has enough elements
             if fingers[1] and not fingers[2]:
